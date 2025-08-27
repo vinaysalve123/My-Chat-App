@@ -7,7 +7,6 @@ const socket = io.connect("https://my-chat-app-ez0b.onrender.com");
 export default function App() {
   const [message, setMessage] = useState("");
   const [displayMessages, setDisplayMessages] = useState(() => {
-    // Load messages from localStorage on initial render
     const saved = localStorage.getItem("chatMessages");
     return saved ? JSON.parse(saved) : [];
   });
@@ -16,19 +15,14 @@ export default function App() {
     if (message.trim() === "") return;
 
     const newMessage = { message, self: true };
-
-    // Optimistically update local state
     setDisplayMessages((prev) => [...prev, newMessage]);
 
-    // Send message to server
     socket.emit("sent_message/emit", { message });
-
     setMessage("");
   };
 
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      // Mark received messages with self=false
       setDisplayMessages((prev) => [...prev, { message: data.message, self: false }]);
     };
 
@@ -39,13 +33,13 @@ export default function App() {
     };
   }, []);
 
-  // Save messages to localStorage whenever they change
+  // Save messages in localStorage
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(displayMessages));
   }, [displayMessages]);
 
   return (
-    <>
+    <div className="chat-wrapper">
       <h1>Simple Chat App</h1>
       <div className="container">
         <input
@@ -55,19 +49,19 @@ export default function App() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <button onClick={sendMessage}>Send Message</button>
+        <button onClick={sendMessage}>Send</button>
       </div>
 
-      <ul>
+      <div className="chat-box">
         {displayMessages.map((msg, index) => (
-          <li
+          <div
             key={index}
-            style={{ textAlign: msg.self ? "right" : "left", color: msg.self ? "blue" : "green" }}
+            className={`chat-bubble ${msg.self ? "self" : "other"}`}
           >
             {msg.message}
-          </li>
+          </div>
         ))}
-      </ul>
-    </>
+      </div>
+    </div>
   );
 }
