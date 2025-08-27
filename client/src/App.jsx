@@ -14,16 +14,26 @@ export default function App() {
   const sendMessage = () => {
     if (message.trim() === "") return;
 
-    const newMessage = { message, self: true };
+    const newMessage = {
+      id: Date.now(),   // unique ID
+      message,
+      self: true,
+    };
+
     setDisplayMessages((prev) => [...prev, newMessage]);
 
-    socket.emit("sent_message/emit", { message });
+    socket.emit("sent_message/emit", newMessage);
+
     setMessage("");
   };
 
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      setDisplayMessages((prev) => [...prev, { message: data.message, self: false }]);
+      setDisplayMessages((prev) => {
+        // Prevent duplicate if we already added this id
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [...prev, { ...data, self: false }];
+      });
     };
 
     socket.on("rec_message", handleReceiveMessage);
@@ -33,7 +43,6 @@ export default function App() {
     };
   }, []);
 
-  // Save messages in localStorage
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(displayMessages));
   }, [displayMessages]);
@@ -53,9 +62,9 @@ export default function App() {
       </div>
 
       <div className="chat-box">
-        {displayMessages.map((msg, index) => (
+        {displayMessages.map((msg) => (
           <div
-            key={index}
+            key={msg.id}
             className={`chat-bubble ${msg.self ? "self" : "other"}`}
           >
             {msg.message}
