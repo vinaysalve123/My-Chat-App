@@ -3,7 +3,7 @@ import "./App.css"
 import io from "socket.io-client";
 
 
-const socket = io.connect("http://localhost:3003");
+const socket = io.connect("https://my-chat-app-ez0b.onrender.com/");
 
 export default function App() {
   const [message, setMessage] = useState("");

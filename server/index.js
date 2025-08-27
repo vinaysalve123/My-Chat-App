@@ -14,7 +14,7 @@ app.use(cors());
 
 const io = new Server(server, {
     cors:{
-        origin: "http://localhost:5173",
+        origin: "https://my-chat-app-iota-eight.vercel.app/",
         methods: ["GET", "POST"]
     }
 })
