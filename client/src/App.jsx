@@ -6,18 +6,30 @@ const socket = io.connect("https://my-chat-app-ez0b.onrender.com");
 
 export default function App() {
   const [message, setMessage] = useState("");
-  const [displayMessages, setDisplayMessages] = useState([]);
+  const [displayMessages, setDisplayMessages] = useState(() => {
+    // Load messages from localStorage on initial render
+    const saved = localStorage.getItem("chatMessages");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const sendMessage = () => {
     if (message.trim() === "") return;
 
+    const newMessage = { message, self: true };
+
+    // Optimistically update local state
+    setDisplayMessages((prev) => [...prev, newMessage]);
+
+    // Send message to server
     socket.emit("sent_message/emit", { message });
+
     setMessage("");
   };
 
   useEffect(() => {
     const handleReceiveMessage = (data) => {
-      setDisplayMessages((prev) => [...prev, data.message]);
+      // Mark received messages with self=false
+      setDisplayMessages((prev) => [...prev, { message: data.message, self: false }]);
     };
 
     socket.on("rec_message", handleReceiveMessage);
@@ -26,6 +38,11 @@ export default function App() {
       socket.off("rec_message", handleReceiveMessage);
     };
   }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(displayMessages));
+  }, [displayMessages]);
 
   return (
     <>
@@ -43,7 +60,12 @@ export default function App() {
 
       <ul>
         {displayMessages.map((msg, index) => (
-          <li key={index}>{msg}</li>
+          <li
+            key={index}
+            style={{ textAlign: msg.self ? "right" : "left", color: msg.self ? "blue" : "green" }}
+          >
+            {msg.message}
+          </li>
         ))}
       </ul>
     </>
